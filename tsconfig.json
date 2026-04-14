@@ -1,0 +1,17 @@
+{
+    "files": [],
+    "references": [
+        {
+            "path": "packages/types"
+        },
+        {
+            "path": "packages/db"
+        },
+        {
+            "path": "apps/backend"
+        },
+        {
+            "path": "apps/bot"
+        }
+    ]
+}

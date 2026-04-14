@@ -1,0 +1,16 @@
+{
+    "name": "@paynoy/db",
+    "version": "1.0.0",
+    "main": "dist/client.js",
+    "types": "dist/client.d.ts",
+    "scripts": {
+        "build": "tsc",
+        "dev": "tsc --watch"
+    },
+    "dependencies": {
+        "@supabase/supabase-js": "^2.39.0"
+    },
+    "devDependencies": {
+        "typescript": "^5.4.0"
+    }
+}

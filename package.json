@@ -1,0 +1,20 @@
+{
+  "name": "paynoy",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:backend": "npm run dev -w apps/backend",
+    "dev:bot": "npm run dev -w apps/bot",
+    "dev:web": "npm run dev -w apps/web",
+    "build": "npm run build -w packages/types && npm run build -w packages/db && npm run build -w apps/backend && npm run build -w apps/bot",
+    "lint": "eslint . --ext .ts,.tsx"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "@types/node": "^20.11.0"
+  }
+}
