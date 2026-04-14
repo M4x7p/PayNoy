@@ -51,6 +51,7 @@ npm run dev:web
 ```
 
 ## Deployment
-- **Backend & Bot:** Deploy to Railway. Provision a Redis instance for BullMQ.
-- **Frontend:** Deploy to Vercel.
-- **Omise Webhook:** Point your Omise Dashboard webhook URL to `https://<your-backend-domain>/webhook/omise`.
+- **Backend**: Deployed to Railway. The public API URL is `https://paynoy.maxyp.com`.
+- **Bot**: Deployed to Railway. The Discord Bot automatically connects and interacts with the Backend via standard internal routing.
+- **Frontend**: Deployed to Vercel. Dashboard URL is `https://pay-noy-web.vercel.app/`.
+- **Omise Webhook**: Point your Omise Dashboard webhook URL to `https://paynoy.maxyp.com/webhook/omise`.
