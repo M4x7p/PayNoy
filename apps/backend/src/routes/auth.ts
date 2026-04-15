@@ -159,4 +159,41 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
         reply.clearCookie('paynoi_token', { path: '/' });
         return reply.send({ success: true });
     });
+
+    // TEMPORARY: Debug endpoint to test DB connectivity
+    fastify.get('/auth/debug', async (request, reply) => {
+        try {
+            const db = getSupabaseClient();
+
+            // Test 1: Can we query the users table?
+            const { data, error } = await db.from('users').select('id, discord_id, username, avatar, onboarded, guilds_cache').limit(1);
+
+            if (error) {
+                return reply.send({
+                    status: 'DB_ERROR',
+                    error: error.message,
+                    code: error.code,
+                    details: error.details,
+                    hint: error.hint
+                });
+            }
+
+            return reply.send({
+                status: 'OK',
+                userCount: data?.length || 0,
+                columns: data && data.length > 0 ? Object.keys(data[0]) : 'no_rows',
+                env: {
+                    API_BASE_URL: process.env.API_BASE_URL ? 'SET' : 'MISSING',
+                    DASHBOARD_URL: process.env.DASHBOARD_URL ? 'SET' : 'MISSING',
+                    DISCORD_CLIENT_ID: process.env.DISCORD_CLIENT_ID ? 'SET' : 'MISSING',
+                    DISCORD_CLIENT_SECRET: process.env.DISCORD_CLIENT_SECRET ? 'SET' : 'MISSING',
+                    JWT_SECRET: process.env.JWT_SECRET ? 'SET' : 'MISSING',
+                    SUPABASE_URL: process.env.SUPABASE_URL ? 'SET' : 'MISSING',
+                    SUPABASE_KEY: process.env.SUPABASE_KEY ? 'SET' : 'MISSING',
+                }
+            });
+        } catch (err: any) {
+            return reply.send({ status: 'CRASH', error: err.message, stack: err.stack });
+        }
+    });
 };
