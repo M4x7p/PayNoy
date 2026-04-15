@@ -63,7 +63,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
                 return reply.redirect(`${process.env.DASHBOARD_URL}/dashboard/login?error=auth_failed`);
             }
 
-            const tokenData = await tokenRes.json();
+            const tokenData: any = await tokenRes.json();
             const accessToken = tokenData.access_token; // NEVER STORE THIS IN DB
 
             // Step 2: Fetch User Profile
@@ -72,7 +72,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
             });
 
             if (!userRes.ok) throw new Error('Failed to fetch Discord user');
-            const discordUser = await userRes.json();
+            const discordUser: any = await userRes.json();
 
             // Step 3: Fetch Guilds where the user is Admin (0x8)
             const guildsRes = await fetch(`${DISCORD_API_BASE}/users/@me/guilds`, {
@@ -80,7 +80,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
             });
 
             if (!guildsRes.ok) throw new Error('Failed to fetch Discord guilds');
-            const discordGuilds = await guildsRes.json();
+            const discordGuilds = await guildsRes.json() as any[];
 
             // Filter for ADMINISTRATOR permission (0x8)
             const adminGuilds = discordGuilds.filter((g: any) => (BigInt(g.permissions) & BigInt(0x8)) !== BigInt(0));

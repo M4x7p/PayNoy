@@ -65,7 +65,7 @@ export const dashboardRoutes: FastifyPluginAsync = async (app) => {
                         const botUserRes = await fetch(`${DISCORD_API_BASE}/users/@me`, {
                             headers: { Authorization: `Bot ${botToken}` }
                         });
-                        const botData = await botUserRes.json();
+                        const botData: any = await botUserRes.json();
 
                         const memberRes = await fetch(`${DISCORD_API_BASE}/guilds/${guild.id}/members/${botData.id}`, {
                             headers: { Authorization: `Bot ${botToken}` }
