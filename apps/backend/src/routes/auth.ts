@@ -45,6 +45,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
 
         try {
             // Step 1: Exchange code for access token (Ephemeral)
+            logger.info('Auth callback: Step 1 - Exchanging code for token');
             const tokenRes = await fetch(`${DISCORD_API_BASE}/oauth2/token`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -65,32 +66,45 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
 
             const tokenData: any = await tokenRes.json();
             const accessToken = tokenData.access_token; // NEVER STORE THIS IN DB
+            logger.info('Auth callback: Step 1 DONE - Got access token');
 
             // Step 2: Fetch User Profile
+            logger.info('Auth callback: Step 2 - Fetching user profile');
             const userRes = await fetch(`${DISCORD_API_BASE}/users/@me`, {
                 headers: { Authorization: `Bearer ${accessToken}` },
             });
 
             if (!userRes.ok) throw new Error('Failed to fetch Discord user');
             const discordUser: any = await userRes.json();
+            logger.info({ discordId: discordUser.id, username: discordUser.username }, 'Auth callback: Step 2 DONE - Got user');
 
             // Step 3: Fetch Guilds where the user is Admin (0x8)
+            logger.info('Auth callback: Step 3 - Fetching guilds');
             const guildsRes = await fetch(`${DISCORD_API_BASE}/users/@me/guilds`, {
                 headers: { Authorization: `Bearer ${accessToken}` },
             });
 
             if (!guildsRes.ok) throw new Error('Failed to fetch Discord guilds');
             const discordGuilds = await guildsRes.json() as any[];
+            logger.info({ totalGuilds: discordGuilds.length }, 'Auth callback: Step 3 DONE - Got guilds');
 
             // Filter for ADMINISTRATOR permission (0x8)
-            const adminGuilds = discordGuilds.filter((g: any) => (BigInt(g.permissions) & BigInt(0x8)) !== BigInt(0));
+            const adminGuilds = discordGuilds.filter((g: any) => {
+                try {
+                    return (BigInt(g.permissions) & BigInt(0x8)) !== BigInt(0);
+                } catch {
+                    return false; // Skip guilds with invalid permissions
+                }
+            });
             const guildsCache = adminGuilds.map((g: any) => ({
                 id: g.id,
                 name: g.name,
                 icon: g.icon
             }));
+            logger.info({ adminGuilds: adminGuilds.length }, 'Auth callback: Step 3b DONE - Filtered admin guilds');
 
             // Step 4: Upsert User into Database (without tokens)
+            logger.info('Auth callback: Step 4 - Upserting user in DB');
             const db = getSupabaseClient();
 
             // Check if user already exists
@@ -99,6 +113,8 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
                 .select('id, onboarded')
                 .eq('discord_id', discordUser.id)
                 .single();
+
+            logger.info({ existingUser: !!existingUser, findError: findError?.code }, 'Auth callback: Step 4a - User lookup result');
 
             let userId: string;
             let onboarded = false;
@@ -112,12 +128,18 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
                 userId = existingUser.id;
                 onboarded = existingUser.onboarded;
 
-                await db.from('users').update({
+                const { error: updateError } = await db.from('users').update({
                     username: discordUser.username,
                     avatar: discordUser.avatar,
                     guilds_cache: guildsCache,
                     guilds_cache_updated_at: new Date().toISOString()
                 }).eq('id', userId);
+
+                if (updateError) {
+                    logger.error({ error: updateError }, 'Auth callback: Step 4b - Update user failed');
+                    throw updateError;
+                }
+                logger.info({ userId }, 'Auth callback: Step 4b DONE - Updated existing user');
             } else {
                 // Create new user
                 const { data: newUser, error: insertError } = await db.from('users').insert({
@@ -128,12 +150,17 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
                     guilds_cache_updated_at: new Date().toISOString()
                 }).select('id, onboarded').single();
 
-                if (insertError) throw insertError;
+                if (insertError) {
+                    logger.error({ error: insertError }, 'Auth callback: Step 4b - Insert user failed');
+                    throw insertError;
+                }
                 userId = newUser.id;
                 onboarded = newUser.onboarded;
+                logger.info({ userId }, 'Auth callback: Step 4b DONE - Created new user');
             }
 
             // Step 5: Issue JWT and Set Cookie
+            logger.info({ userId }, 'Auth callback: Step 5 - Issuing JWT');
             const jwtToken = signToken({ id: userId, discord_id: discordUser.id });
 
             reply.setCookie('paynoi_token', jwtToken, {
@@ -146,6 +173,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
 
             // Redirect user to the dashboard or onboarding flow
             const redirectTarget = onboarded ? '/dashboard' : '/dashboard/onboarding';
+            logger.info({ redirectTarget }, 'Auth callback: Step 5 DONE - Redirecting');
             return reply.redirect(`${process.env.DASHBOARD_URL}${redirectTarget}`);
 
         } catch (err: any) {
