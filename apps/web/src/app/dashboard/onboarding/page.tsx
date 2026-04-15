@@ -36,15 +36,50 @@ export default function OnboardingPage() {
         }
     };
 
+    const [checking, setChecking] = useState(false);
+
     const handleCheckBot = async () => {
-        const { guilds: g } = await api.refreshGuilds();
-        setGuilds(g);
-        const updated = g.find((x: any) => x.id === selectedGuild?.id);
-        if (updated?.bot_present) {
-            setSelectedGuild(updated);
-            setStep('setup');
-        }
+        setChecking(true);
+        try {
+            const { guilds: g } = await api.refreshGuilds();
+            setGuilds(g);
+            const updated = g.find((x: any) => x.id === selectedGuild?.id);
+            if (updated?.bot_present) {
+                setSelectedGuild(updated);
+                setStep('setup');
+            }
+        } catch { }
+        setChecking(false);
     };
+
+    // Auto-poll for bot presence when on the invite step
+    useEffect(() => {
+        if (step !== 'invite' || !selectedGuild) return;
+
+        // Poll every 5 seconds
+        const interval = setInterval(async () => {
+            try {
+                const { guilds: g } = await api.refreshGuilds();
+                setGuilds(g);
+                const updated = g.find((x: any) => x.id === selectedGuild?.id);
+                if (updated?.bot_present) {
+                    setSelectedGuild(updated);
+                    setStep('setup');
+                }
+            } catch { }
+        }, 5000);
+
+        // Also check immediately when the tab regains focus (user returns from Discord)
+        const handleFocus = () => {
+            handleCheckBot();
+        };
+        window.addEventListener('focus', handleFocus);
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('focus', handleFocus);
+        };
+    }, [step, selectedGuild?.id]);
 
     const handleComplete = async () => {
         if (!promptpayName || !promptpayAccount) return;
@@ -125,15 +160,16 @@ export default function OnboardingPage() {
                 {step === 'invite' && selectedGuild && (
                     <div className="onboarding-card">
                         <h2>เชิญบอทเข้า {selectedGuild.name}</h2>
-                        <p>คลิกปุ่มด้านล่างเพื่อเชิญบอทเข้าเซิร์ฟเวอร์ จากนั้นกดตรวจสอบ</p>
+                        <p>คลิกปุ่มด้านล่างเพื่อเชิญบอทเข้าเซิร์ฟเวอร์ ระบบจะตรวจสอบให้อัตโนมัติ</p>
                         <div className="onboarding-invite-actions">
                             <a href={api.getBotInviteUrl(selectedGuild.id)} target="_blank" rel="noreferrer" className="onboarding-invite-btn">
                                 🤖 เชิญบอทเข้าเซิร์ฟเวอร์
                             </a>
-                            <button onClick={handleCheckBot} className="onboarding-check-btn">
-                                🔄 ตรวจสอบ
+                            <button onClick={handleCheckBot} disabled={checking} className="onboarding-check-btn">
+                                {checking ? '⏳ กำลังตรวจสอบ...' : '🔄 ตรวจสอบ'}
                             </button>
                         </div>
+                        <p className="onboarding-auto-check">🔍 กำลังตรวจสอบอัตโนมัติ...</p>
                         <button onClick={() => setStep('server')} className="onboarding-back">← เลือกเซิร์ฟเวอร์อื่น</button>
                     </div>
                 )}

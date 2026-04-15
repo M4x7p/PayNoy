@@ -1816,6 +1816,19 @@ b {
   color: var(--text-secondary);
 }
 
+.onboarding-auto-check {
+  text-align: center;
+  margin-top: 12px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
 /* Form */
 .onboarding-form {
   display: flex;
