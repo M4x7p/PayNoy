@@ -123,6 +123,45 @@ async function buildApp() {
     await app.register(authRoutes);
     await app.register(dashboardRoutes);
 
+    // TEMPORARY: Debug bot token check
+    app.get('/debug/bot-check/:guildId', async (request, reply) => {
+        const { guildId } = request.params as { guildId: string };
+        const botToken = process.env.DISCORD_BOT_TOKEN;
+
+        if (!botToken) {
+            return reply.send({ error: 'DISCORD_BOT_TOKEN not set', tokenLength: 0 });
+        }
+
+        try {
+            // Test 1: Bot identity
+            const meRes = await fetch('https://discord.com/api/v10/users/@me', {
+                headers: { Authorization: `Bot ${botToken}` }
+            });
+            const meData = await meRes.json();
+
+            // Test 2: Bot's guilds
+            const guildsRes = await fetch('https://discord.com/api/v10/users/@me/guilds', {
+                headers: { Authorization: `Bot ${botToken}` }
+            });
+            const guildsData = await guildsRes.json();
+
+            // Test 3: Specific guild fetch
+            const guildRes = await fetch(`https://discord.com/api/v10/guilds/${guildId}`, {
+                headers: { Authorization: `Bot ${botToken}` }
+            });
+            const guildData = await guildRes.json();
+
+            return reply.send({
+                tokenPrefix: botToken.substring(0, 10) + '...',
+                botIdentity: { status: meRes.status, ok: meRes.ok, data: meData },
+                botGuilds: { status: guildsRes.status, ok: guildsRes.ok, count: Array.isArray(guildsData) ? guildsData.length : 'not_array', guilds: guildsData },
+                guildCheck: { status: guildRes.status, ok: guildRes.ok, data: guildData }
+            });
+        } catch (err: any) {
+            return reply.send({ error: err.message });
+        }
+    });
+
     // ── Error Handler ─────────────────────────────────────────
 
     app.setErrorHandler((error: any, request: any, reply: any) => {
