@@ -121,7 +121,7 @@ async function buildApp() {
     // ── Dashboard & Auth Routes ───────────────────────────────
 
     await app.register(authRoutes);
-    await app.register(dashboardRoutes);
+    await app.register(dashboardRoutes, { prefix: '/api' });
 
     // ── Error Handler ─────────────────────────────────────────
 
