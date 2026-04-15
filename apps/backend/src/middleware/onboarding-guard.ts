@@ -1,7 +1,8 @@
 import { FastifyPluginAsync } from 'fastify';
+import fp from 'fastify-plugin';
 import { getSupabaseClient } from '@paynoy/db';
 
-export const onboardingGuard: FastifyPluginAsync = async (fastify) => {
+const onboardingGuardPlugin: FastifyPluginAsync = async (fastify) => {
     fastify.addHook('preHandler', async (request, reply) => {
         if (!request.user) return; // Handled by auth-guard
 
@@ -41,3 +42,5 @@ export const onboardingGuard: FastifyPluginAsync = async (fastify) => {
         }
     });
 };
+
+export const onboardingGuard = fp(onboardingGuardPlugin);

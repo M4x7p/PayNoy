@@ -1,4 +1,5 @@
 import { FastifyPluginAsync } from 'fastify';
+import fp from 'fastify-plugin';
 import { getSupabaseClient } from '@paynoy/db';
 import { logger } from '../lib/logger';
 
@@ -7,7 +8,7 @@ import { logger } from '../lib/logger';
  * Requires `authGuard` to run first to populate `request.user`.
  * Expects the route to provide `:id` (which maps to servers.id).
  */
-export const serverOwnerGuard: FastifyPluginAsync = async (fastify) => {
+const serverOwnerGuardPlugin: FastifyPluginAsync = async (fastify) => {
     fastify.addHook('preHandler', async (request, reply) => {
         if (!request.user) return; // Should not happen if auth-guard is registered before
 
@@ -37,3 +38,5 @@ export const serverOwnerGuard: FastifyPluginAsync = async (fastify) => {
         }
     });
 };
+
+export const serverOwnerGuard = fp(serverOwnerGuardPlugin);

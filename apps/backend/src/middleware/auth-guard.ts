@@ -1,4 +1,5 @@
 import { FastifyPluginAsync } from 'fastify';
+import fp from 'fastify-plugin';
 import { verifyToken, signToken, shouldRefresh, JwtPayload } from '../lib/jwt';
 import { getSupabaseClient } from '@paynoy/db';
 import { logger } from '../lib/logger';
@@ -11,12 +12,11 @@ declare module 'fastify' {
     }
 }
 
-export const authGuard: FastifyPluginAsync = async (fastify) => {
+const authGuardPlugin: FastifyPluginAsync = async (fastify) => {
     fastify.addHook('preHandler', async (request, reply) => {
         try {
             // 1. Extract token from httpOnly cookie
             const token = request.cookies.paynoi_token;
-            logger.info({ hasToken: !!token, cookieKeys: Object.keys(request.cookies || {}) }, 'Auth guard: checking cookies');
 
             if (!token) {
                 reply.status(401).send({ error: 'Unauthorized', message: 'No session cookie' });
@@ -25,7 +25,6 @@ export const authGuard: FastifyPluginAsync = async (fastify) => {
 
             // 2. Verify token
             const decoded = verifyToken(token);
-            logger.info({ userId: decoded.id, discordId: decoded.discord_id }, 'Auth guard: JWT verified');
             request.user = decoded;
 
             // 3. Sliding Session: Auto-renew if expiring soon (< 6 hours)
@@ -49,3 +48,5 @@ export const authGuard: FastifyPluginAsync = async (fastify) => {
         }
     });
 };
+
+export const authGuard = fp(authGuardPlugin);
