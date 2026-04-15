@@ -149,7 +149,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
             return reply.redirect(`${process.env.DASHBOARD_URL}${redirectTarget}`);
 
         } catch (err: any) {
-            logger.error({ err: err.message }, 'Auth callback unhandled error');
+            logger.error({ err: err.message, stack: err.stack, code: err.code, details: err.details, hint: err.hint }, 'Auth callback unhandled error');
             return reply.redirect(`${process.env.DASHBOARD_URL}/dashboard/login?error=server_error`);
         }
     });
