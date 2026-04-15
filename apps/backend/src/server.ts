@@ -121,7 +121,7 @@ async function buildApp() {
     // ── Dashboard & Auth Routes ───────────────────────────────
 
     await app.register(authRoutes);
-    await app.register(dashboardRoutes, { prefix: '/api' });
+    await app.register(dashboardRoutes);
 
     // TEMPORARY: Debug endpoint to list all registered routes
     app.get('/debug/routes', async (_request, reply) => {
