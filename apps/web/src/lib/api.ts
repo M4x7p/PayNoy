@@ -83,8 +83,8 @@ export const api = {
             `/api/server/${serverId}/orders`, { params: { page, limit } }
         ),
 
-    // Onboarding
-    completeOnboarding: () => request('/api/onboarding/complete', { method: 'POST' }),
+    completeOnboarding: (data: { guild_id: string; guild_name: string; promptpay_name: string; promptpay_account: string }) =>
+        request('/api/onboarding/complete', { method: 'POST', body: JSON.stringify(data) }),
 
     // Bot invite URL
     getBotInviteUrl: (guildId: string) =>

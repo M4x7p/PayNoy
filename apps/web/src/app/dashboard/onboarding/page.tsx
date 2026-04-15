@@ -85,11 +85,12 @@ export default function OnboardingPage() {
         if (!promptpayName || !promptpayAccount) return;
         setSaving(true);
         try {
-            await api.updateSettings(selectedGuild.id, {
+            await api.completeOnboarding({
+                guild_id: selectedGuild.id,
+                guild_name: selectedGuild.name,
                 promptpay_name: promptpayName,
                 promptpay_account: promptpayAccount,
             });
-            await api.completeOnboarding();
             router.push('/dashboard');
         } catch (err) {
             alert('เกิดข้อผิดพลาด กรุณาลองใหม่');

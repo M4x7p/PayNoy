@@ -33,8 +33,43 @@ export const dashboardRoutes: FastifyPluginAsync = async (app) => {
         });
 
         protectedApp.post('/onboarding/complete', async (request, reply) => {
+            const { guild_id, guild_name, promptpay_name, promptpay_account } = request.body as {
+                guild_id: string;
+                guild_name: string;
+                promptpay_name: string;
+                promptpay_account: string;
+            };
+
+            if (!guild_id || !promptpay_name || !promptpay_account) {
+                return reply.status(400).send({ error: 'Missing required fields: guild_id, promptpay_name, promptpay_account' });
+            }
+
             const db = getSupabaseClient();
-            await db.from('users').update({ onboarded: true }).eq('id', request.user!.id);
+            const userId = request.user!.id;
+
+            // 1. Upsert server record (create if not exists, update if exists)
+            const { error: serverError } = await db.from('servers').upsert({
+                discord_guild_id: guild_id,
+                name: guild_name || guild_id,
+                owner_id: userId,
+                promptpay_name,
+                promptpay_account,
+            }, { onConflict: 'discord_guild_id' });
+
+            if (serverError) {
+                logger.error({ err: serverError, guildId: guild_id }, 'Failed to upsert server during onboarding');
+                return reply.status(500).send({ error: 'Failed to create server', detail: serverError.message });
+            }
+
+            // 2. Mark user as onboarded
+            const { error: userError } = await db.from('users').update({ onboarded: true }).eq('id', userId);
+
+            if (userError) {
+                logger.error({ err: userError, userId }, 'Failed to mark user as onboarded');
+                return reply.status(500).send({ error: 'Failed to complete onboarding' });
+            }
+
+            logger.info({ userId, guildId: guild_id }, 'Onboarding completed');
             return reply.send({ success: true });
         });
 
