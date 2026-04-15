@@ -16,13 +16,16 @@ export const authGuard: FastifyPluginAsync = async (fastify) => {
         try {
             // 1. Extract token from httpOnly cookie
             const token = request.cookies.paynoi_token;
+            logger.info({ hasToken: !!token, cookieKeys: Object.keys(request.cookies || {}) }, 'Auth guard: checking cookies');
 
             if (!token) {
-                return reply.status(401).send({ error: 'Unauthorized', message: 'No session cookie' });
+                reply.status(401).send({ error: 'Unauthorized', message: 'No session cookie' });
+                return;
             }
 
             // 2. Verify token
             const decoded = verifyToken(token);
+            logger.info({ userId: decoded.id, discordId: decoded.discord_id }, 'Auth guard: JWT verified');
             request.user = decoded;
 
             // 3. Sliding Session: Auto-renew if expiring soon (< 6 hours)
@@ -33,15 +36,16 @@ export const authGuard: FastifyPluginAsync = async (fastify) => {
                 reply.setCookie('paynoi_token', newToken, {
                     path: '/',
                     httpOnly: true,
-                    secure: true, // Required for SameSite=None
-                    sameSite: 'none', // Cross-origin: frontend (Vercel) ↔ backend (Railway)
-                    maxAge: 24 * 60 * 60, // 24 hours
+                    secure: true,
+                    sameSite: 'none',
+                    maxAge: 24 * 60 * 60,
                 });
             }
 
         } catch (err: any) {
-            logger.warn({ err: err.message }, 'Auth guard failed');
-            return reply.status(401).send({ error: 'Unauthorized', message: 'Invalid or expired session' });
+            logger.warn({ err: err.message }, 'Auth guard: JWT verification failed');
+            reply.status(401).send({ error: 'Unauthorized', message: 'Invalid or expired session' });
+            return;
         }
     });
 };
