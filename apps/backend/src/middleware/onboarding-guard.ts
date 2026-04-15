@@ -30,7 +30,8 @@ const onboardingGuardPlugin: FastifyPluginAsync = async (fastify) => {
             const isAllowed =
                 path.startsWith('/api/me') ||
                 path.startsWith('/api/guilds') ||
-                path.startsWith('/api/onboarding'); // Let them complete onboarding!
+                path.startsWith('/api/onboarding') ||
+                path.startsWith('/api/server'); // Allow server setup during onboarding
 
             if (!isAllowed) {
                 return reply.status(403).send({
