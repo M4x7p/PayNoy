@@ -123,27 +123,6 @@ async function buildApp() {
     await app.register(authRoutes);
     await app.register(dashboardRoutes);
 
-    // TEMP: Test bot token
-    app.get('/debug/bot-token', async (_request, reply) => {
-        const botToken = process.env.DISCORD_BOT_TOKEN;
-        if (!botToken) return reply.send({ error: 'NO TOKEN SET' });
-        try {
-            const r = await fetch('https://discord.com/api/v10/users/@me', {
-                headers: { Authorization: `Bot ${botToken}` }
-            });
-            const d = await r.json();
-            const gR = await fetch('https://discord.com/api/v10/users/@me/guilds', {
-                headers: { Authorization: `Bot ${botToken}` }
-            });
-            const gD = await gR.json();
-            return reply.send({
-                tokenLen: botToken.length,
-                identity: { status: r.status, data: d },
-                guilds: { status: gR.status, count: Array.isArray(gD) ? gD.length : 'err', data: gD }
-            });
-        } catch (e: any) { return reply.send({ error: e.message }); }
-    });
-
     // ── Error Handler ─────────────────────────────────────────
 
     app.setErrorHandler((error: any, request: any, reply: any) => {

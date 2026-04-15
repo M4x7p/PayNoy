@@ -61,8 +61,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     return;
                 }
 
-                // Load guilds
-                const { guilds: g } = await api.getGuilds();
+                // Load guilds with fresh bot status check
+                const { guilds: g } = await api.refreshGuilds();
                 setGuilds(g);
 
                 // Auto-select first bot-present guild
