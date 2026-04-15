@@ -518,7 +518,7 @@ export default function Home() {
               <p className="text-sm" style={{ color: 'var(--text-secondary)', lineHeight: 1.8 }}>เริ่มใช้งานระบบรับเงิน QR อัตโนมัติด้วยบัญชี Discord ของคุณ</p>
             </div>
             <a
-              href="/api/auth/signin"
+              href="/dashboard/login"
               className="btn-primary w-full text-center mb-4"
               style={{ padding: '16px', background: '#5865f2', position: 'relative' }}
             >
