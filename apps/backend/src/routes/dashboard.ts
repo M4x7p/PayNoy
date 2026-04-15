@@ -149,19 +149,19 @@ export const dashboardRoutes: FastifyPluginAsync = async (app) => {
             serverApp.register(serverOwnerGuard);
 
             serverApp.get('/server/:id', async (request, reply) => {
-                const { id } = request.params as { id: string };
+                const serverId = (request as any).serverId;
                 const db = getSupabaseClient();
 
-                const { data: server } = await db.from('servers').select('*').eq('id', id).single();
+                const { data: server } = await db.from('servers').select('*').eq('id', serverId).single();
                 return reply.send({ server });
             });
 
             serverApp.post('/server/:id/settings', async (request, reply) => {
-                const { id } = request.params as { id: string };
+                const serverId = (request as any).serverId;
                 const { promptpay_name, promptpay_account, support_channel_id } = request.body as any;
 
                 const db = getSupabaseClient();
-                await db.from('servers').update({ promptpay_name, promptpay_account, support_channel_id }).eq('id', id);
+                await db.from('servers').update({ promptpay_name, promptpay_account, support_channel_id }).eq('id', serverId);
                 return reply.send({ success: true });
             });
 
@@ -170,19 +170,19 @@ export const dashboardRoutes: FastifyPluginAsync = async (app) => {
             // -----------------------------------------------------
 
             serverApp.get('/server/:id/products', async (request, reply) => {
-                const { id } = request.params as { id: string };
+                const serverId = (request as any).serverId;
                 const db = getSupabaseClient();
-                const { data: products } = await db.from('products').select('*').eq('server_id', id).order('created_at', { ascending: false });
+                const { data: products } = await db.from('products').select('*').eq('server_id', serverId).order('created_at', { ascending: false });
                 return reply.send({ products });
             });
 
             serverApp.post('/server/:id/products', async (request, reply) => {
-                const { id } = request.params as { id: string };
+                const serverId = (request as any).serverId;
                 const payload = request.body as any;
                 const db = getSupabaseClient();
 
                 const { data: product, error } = await db.from('products').insert({
-                    server_id: id,
+                    server_id: serverId,
                     name: payload.name,
                     price: payload.price,
                     role_id: payload.role_id,
@@ -195,7 +195,8 @@ export const dashboardRoutes: FastifyPluginAsync = async (app) => {
             });
 
             serverApp.put('/server/:id/products/:pid', async (request, reply) => {
-                const { id, pid } = request.params as { id: string; pid: string };
+                const serverId = (request as any).serverId;
+                const { pid } = request.params as { id: string; pid: string };
                 const payload = request.body as any;
                 const db = getSupabaseClient();
 
@@ -205,16 +206,17 @@ export const dashboardRoutes: FastifyPluginAsync = async (app) => {
                     role_id: payload.role_id,
                     embed_json: payload.embed_json,
                     button_config: payload.button_config
-                }).eq('id', pid).eq('server_id', id).select().single();
+                }).eq('id', pid).eq('server_id', serverId).select().single();
 
                 if (error) return reply.status(400).send({ error: error.message });
                 return reply.send({ product });
             });
 
             serverApp.delete('/server/:id/products/:pid', async (request, reply) => {
-                const { id, pid } = request.params as { id: string; pid: string };
+                const serverId = (request as any).serverId;
+                const { pid } = request.params as { id: string; pid: string };
                 const db = getSupabaseClient();
-                await db.from('products').delete().eq('id', pid).eq('server_id', id);
+                await db.from('products').delete().eq('id', pid).eq('server_id', serverId);
                 return reply.send({ success: true });
             });
 
@@ -223,7 +225,7 @@ export const dashboardRoutes: FastifyPluginAsync = async (app) => {
             // -----------------------------------------------------
 
             serverApp.get('/server/:id/orders', async (request, reply) => {
-                const { id } = request.params as { id: string };
+                const serverId = (request as any).serverId;
                 const { page = 1, limit = 20 } = request.query as any;
 
                 const db = getSupabaseClient();
@@ -233,7 +235,7 @@ export const dashboardRoutes: FastifyPluginAsync = async (app) => {
                 const { data: orders, count } = await db
                     .from('orders')
                     .select('*, products(name)', { count: 'exact' })
-                    .eq('server_id', id)
+                    .eq('server_id', serverId)
                     .order('created_at', { ascending: false })
                     .range(from, to);
 

@@ -19,15 +19,22 @@ const serverOwnerGuardPlugin: FastifyPluginAsync = async (fastify) => {
 
         const db = getSupabaseClient();
 
+        // Support both UUID and Discord guild ID formats
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+        const column = isUUID ? 'id' : 'discord_guild_id';
+
         const { data: server, error } = await db
             .from('servers')
-            .select('owner_id')
-            .eq('id', id)
+            .select('id, owner_id')
+            .eq(column, id)
             .single();
 
         if (error || !server) {
             return reply.status(404).send({ error: 'Server not found' });
         }
+
+        // Attach resolved UUID for downstream handlers
+        (request as any).serverId = server.id;
 
         if (server.owner_id !== request.user.id) {
             logger.warn(
