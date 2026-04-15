@@ -57,34 +57,34 @@ export const api = {
     logout: () => request('/auth/logout', { method: 'POST' }),
 
     // User
-    getMe: () => request<{ user: any }>('/me'),
+    getMe: () => request<{ user: any }>('/api/me'),
 
     // Guilds
-    getGuilds: () => request<{ guilds: any[] }>('/guilds'),
-    refreshGuilds: () => request<{ guilds: any[] }>('/guilds/refresh'),
+    getGuilds: () => request<{ guilds: any[] }>('/api/guilds'),
+    refreshGuilds: () => request<{ guilds: any[] }>('/api/guilds/refresh'),
 
     // Server
-    getServer: (id: string) => request<{ server: any }>(`/server/${id}`),
+    getServer: (id: string) => request<{ server: any }>(`/api/server/${id}`),
     updateSettings: (id: string, data: any) =>
-        request(`/server/${id}/settings`, { method: 'POST', body: JSON.stringify(data) }),
+        request(`/api/server/${id}/settings`, { method: 'POST', body: JSON.stringify(data) }),
 
     // Products
-    getProducts: (serverId: string) => request<{ products: any[] }>(`/server/${serverId}/products`),
+    getProducts: (serverId: string) => request<{ products: any[] }>(`/api/server/${serverId}/products`),
     createProduct: (serverId: string, data: any) =>
-        request<{ product: any }>(`/server/${serverId}/products`, { method: 'POST', body: JSON.stringify(data) }),
+        request<{ product: any }>(`/api/server/${serverId}/products`, { method: 'POST', body: JSON.stringify(data) }),
     updateProduct: (serverId: string, productId: string, data: any) =>
-        request<{ product: any }>(`/server/${serverId}/products/${productId}`, { method: 'PUT', body: JSON.stringify(data) }),
+        request<{ product: any }>(`/api/server/${serverId}/products/${productId}`, { method: 'PUT', body: JSON.stringify(data) }),
     deleteProduct: (serverId: string, productId: string) =>
-        request(`/server/${serverId}/products/${productId}`, { method: 'DELETE' }),
+        request(`/api/server/${serverId}/products/${productId}`, { method: 'DELETE' }),
 
     // Orders
     getOrders: (serverId: string, page = 1, limit = 20) =>
         request<{ orders: any[]; total: number; page: number; limit: number }>(
-            `/server/${serverId}/orders`, { params: { page, limit } }
+            `/api/server/${serverId}/orders`, { params: { page, limit } }
         ),
 
     // Onboarding
-    completeOnboarding: () => request('/onboarding/complete', { method: 'POST' }),
+    completeOnboarding: () => request('/api/onboarding/complete', { method: 'POST' }),
 
     // Bot invite URL
     getBotInviteUrl: (guildId: string) =>

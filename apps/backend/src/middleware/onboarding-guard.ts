@@ -27,9 +27,9 @@ export const onboardingGuard: FastifyPluginAsync = async (fastify) => {
 
             // Allowlist rules (exact matches or startsWith)
             const isAllowed =
-                path.startsWith('/me') ||
-                path.startsWith('/guilds') ||
-                path.startsWith('/onboarding'); // Let them complete onboarding!
+                path.startsWith('/api/me') ||
+                path.startsWith('/api/guilds') ||
+                path.startsWith('/api/onboarding'); // Let them complete onboarding!
 
             if (!isAllowed) {
                 return reply.status(403).send({
