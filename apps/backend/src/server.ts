@@ -123,6 +123,12 @@ async function buildApp() {
     await app.register(authRoutes);
     await app.register(dashboardRoutes, { prefix: '/api' });
 
+    // TEMPORARY: Debug endpoint to list all registered routes
+    app.get('/debug/routes', async (_request, reply) => {
+        const routes = app.printRoutes({ commonPrefix: false });
+        return reply.type('text/plain').send(routes);
+    });
+
     // ── Error Handler ─────────────────────────────────────────
 
     app.setErrorHandler((error: any, request: any, reply: any) => {
