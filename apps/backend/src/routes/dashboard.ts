@@ -50,7 +50,6 @@ export const dashboardRoutes: FastifyPluginAsync = async (app) => {
             // 1. Upsert server record (create if not exists, update if exists)
             const { error: serverError } = await db.from('servers').upsert({
                 discord_guild_id: guild_id,
-                name: guild_name || guild_id,
                 owner_id: userId,
                 promptpay_name,
                 promptpay_account,
