@@ -9,10 +9,10 @@ const DISCORD_API_BASE = 'https://discord.com/api/v10';
 
 export const dashboardRoutes: FastifyPluginAsync = async (app) => {
     // Top-level prefix context for all dashboard routes
-    app.register(async (protectedApp) => {
+    await app.register(async (protectedApp) => {
         // Register guards
-        protectedApp.register(authGuard);
-        protectedApp.register(onboardingGuard); // Blocks access if not onboarded (with allowlist)
+        await protectedApp.register(authGuard);
+        await protectedApp.register(onboardingGuard); // Blocks access if not onboarded (with allowlist)
 
         // ---------------------------------------------------------
         // 1. User Profile & Onboarding
