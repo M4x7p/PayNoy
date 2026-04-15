@@ -139,8 +139,8 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
             reply.setCookie('paynoi_token', jwtToken, {
                 path: '/',
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'lax',
+                secure: true, // Required for SameSite=None
+                sameSite: 'none', // Cross-origin: frontend (Vercel) ↔ backend (Railway)
                 maxAge: 24 * 60 * 60, // 24 hours
             });
 
