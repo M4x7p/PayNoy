@@ -9,11 +9,14 @@ import { orderRoutes } from './routes/order';
 import { webhookRoutes } from './routes/webhook';
 import { adminRoutes } from './routes/admin';
 import { serverRoutes } from './routes/server';
+import { authRoutes } from './routes/auth';
+import { dashboardRoutes } from './routes/dashboard';
 import { startRoleAssignmentWorker } from './workers/role-assigner';
 import { startExpireOrdersCron } from './cron/expire-orders';
 import { startReconcilePaymentsCron } from './cron/reconcile-payments';
 import { getSupabaseClient } from '@paynoy/db';
 import { getRedisConnection } from './workers/queue';
+import fastifyCookie from '@fastify/cookie';
 
 // ── Build Fastify App ──────────────────────────────────────
 
@@ -26,8 +29,9 @@ async function buildApp() {
     // ── Global Plugins ────────────────────────────────────────
 
     await app.register(cors, {
-        origin: process.env.CORS_ORIGIN || '*',
+        origin: process.env.DASHBOARD_URL || process.env.CORS_ORIGIN || 'http://localhost:3000',
         methods: ['GET', 'POST', 'PUT', 'DELETE'],
+        credentials: true, // Required for httpOnly cookie auth
     });
 
     await app.register(helmet);
@@ -42,6 +46,12 @@ async function buildApp() {
     });
 
     await app.register(requestIdPlugin);
+
+    // Register cookie parser
+    await app.register(fastifyCookie, {
+        secret: process.env.JWT_SECRET || 'fallback-secret', // For signed cookies if ever needed
+        hook: 'onRequest',
+    });
 
     // ── Request Logging ───────────────────────────────────────
 
@@ -107,6 +117,11 @@ async function buildApp() {
 
     await app.register(adminRoutes, { prefix: '' });
     await app.register(serverRoutes);
+
+    // ── Dashboard & Auth Routes ───────────────────────────────
+
+    await app.register(authRoutes);
+    await app.register(dashboardRoutes);
 
     // ── Error Handler ─────────────────────────────────────────
 
