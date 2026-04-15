@@ -44,33 +44,28 @@ export const dashboardRoutes: FastifyPluginAsync = async (app) => {
 
         // Helper to refresh guilds and bot status from Discord
         async function refreshGuilds(userId: string) {
-            // Because we don't store tokens, we can't fetch on behalf of the user easily if token is gone.
-            // Wait, we decided NOT to store tokens. If we don't store the user's token, we CANNOT fetch 
-            // `users/@me/guilds` later in a background job or refresh automatically!
-            // Ephemeral tokens means guilds are frozen at login time.
-
-            // However, we CAN check if the bot is present in the cached guilds live.
             const db = getSupabaseClient();
             const { data } = await db.from('users').select('guilds_cache').eq('id', userId).single();
             if (!data) return [];
 
             const cachedGuilds = data.guilds_cache || [];
 
-            // Check bot status for each
+            // Check bot status for each guild using the bot token
             const botToken = process.env.DISCORD_BOT_TOKEN;
+            if (!botToken) {
+                logger.warn('DISCORD_BOT_TOKEN not set — cannot check bot presence');
+                return cachedGuilds.map((g: any) => ({ ...g, bot_present: false }));
+            }
+
             const updatedGuilds = await Promise.all(
                 cachedGuilds.map(async (guild: any) => {
                     let botPresent = false;
                     try {
-                        const botUserRes = await fetch(`${DISCORD_API_BASE}/users/@me`, {
+                        // Simple check: if the bot can fetch the guild, it's a member
+                        const res = await fetch(`${DISCORD_API_BASE}/guilds/${guild.id}`, {
                             headers: { Authorization: `Bot ${botToken}` }
                         });
-                        const botData: any = await botUserRes.json();
-
-                        const memberRes = await fetch(`${DISCORD_API_BASE}/guilds/${guild.id}/members/${botData.id}`, {
-                            headers: { Authorization: `Bot ${botToken}` }
-                        });
-                        botPresent = memberRes.ok;
+                        botPresent = res.ok;
                     } catch (e) {
                         logger.error({ guildId: guild.id }, 'Failed to check bot status');
                     }
