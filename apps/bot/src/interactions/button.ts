@@ -3,22 +3,27 @@ import { v4 as uuidv4 } from 'uuid';
 import { CreateOrderRequest, CreateOrderResponse } from '@paynoy/types';
 import { Logger } from 'pino';
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';
+const BACKEND_URL = process.env.BACKEND_URL || 'https://paynoybackend-production.up.railway.app';
 
 export async function handleButtonInteraction(
     interaction: ButtonInteraction,
     logger: Logger
 ): Promise<void> {
     const customId = interaction.customId;
+    logger.info({ customId }, 'Handling button interaction');
 
     // We only handle button IDs starting with "buy_"
-    if (!customId.startsWith('buy_')) return;
+    if (!customId.startsWith('buy_')) {
+        logger.debug({ customId }, 'Ignored button (no buy_ prefix)');
+        return;
+    }
 
     const productId = customId.replace('buy_', '');
     const guildId = interaction.guildId;
     const userId = interaction.user.id;
 
     if (!guildId) {
+        logger.warn({ userId }, 'Button clicked outside of guild');
         await interaction.reply({
             content: 'This button can only be used in a server.',
             ephemeral: true,
@@ -27,18 +32,19 @@ export async function handleButtonInteraction(
     }
 
     // Defer reply as API call might take a moment
+    logger.info({ guildId, productId }, 'Deferring interaction reply');
     await interaction.deferReply({ ephemeral: true });
 
     try {
         const idempotencyKey = uuidv4();
         const payload: CreateOrderRequest = {
-            server_id: guildId, // Wait, backend expects server_id (UUID), but we only have guildId (Discord Snowflake).
+            server_id: guildId,
             product_id: productId,
             discord_user_id: userId,
             idempotency_key: idempotencyKey,
         };
 
-        logger.info({ guildId, productId, userId }, 'Calling backend for order creation');
+        logger.info({ guildId, productId, userId, backend: BACKEND_URL }, 'Calling backend for order creation');
 
         // Make API call to backend
         // NOTE: Backend needs to be updated to accept discord_guild_id instead of server_id UUID,
