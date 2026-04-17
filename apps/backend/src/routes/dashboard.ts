@@ -36,8 +36,25 @@ export const dashboardRoutes: FastifyPluginAsync = async (fastify) => {
             return reply.status(500).send({ error: 'Failed to fetch profile' });
         }
 
-        // Return user data along with their guilds_cache
-        return data;
+        // Get servers where bot is present for this user
+        const { data: ownedServers } = await db
+            .from('servers')
+            .select('discord_guild_id')
+            .eq('owner_id', user.id);
+
+        const activeGuildIds = new Set(ownedServers?.map(s => s.discord_guild_id) || []);
+
+        // Enrich guilds_cache with bot_present flag
+        const enrichedGuilds = (data.guilds_cache || []).map((g: any) => ({
+            ...g,
+            bot_present: activeGuildIds.has(g.id)
+        }));
+
+        // Return user data along with their enriched guilds_cache
+        return {
+            ...data,
+            guilds_cache: enrichedGuilds
+        };
     });
 
     /**
