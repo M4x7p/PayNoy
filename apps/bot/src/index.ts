@@ -135,6 +135,14 @@ async function start() {
     logger.info('🚀 PayNoy bot starting...');
 }
 
+process.on('unhandledRejection', (reason, promise) => {
+    logger.error({ reason, promise }, 'Unhandled Rejection at Bot Process');
+});
+
+process.on('uncaughtException', (err, origin) => {
+    logger.error({ err, origin }, 'Uncaught Exception at Bot Process');
+});
+
 start().catch((err) => {
     logger.fatal({ err }, 'Failed to start bot');
     process.exit(1);
