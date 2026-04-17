@@ -1,7 +1,8 @@
-import { ButtonInteraction, EmbedBuilder, AttachmentBuilder } from 'discord.js';
+import { ButtonInteraction, EmbedBuilder, AttachmentBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import { v4 as uuidv4 } from 'uuid';
 import { CreateOrderRequest, CreateOrderResponse } from '@paynoy/types';
 import { Logger } from 'pino';
+import { handleSlipVerification } from './slip';
 
 const BACKEND_URL = process.env.BACKEND_URL || 'https://paynoybackend-production.up.railway.app';
 
@@ -13,8 +14,14 @@ export async function handleButtonInteraction(
     logger.info({ customId }, 'Handling button interaction');
 
     // We only handle button IDs starting with "buy_"
-    if (!customId.startsWith('buy_')) {
-        logger.debug({ customId }, 'Ignored button (no buy_ prefix)');
+    if (!customId.startsWith('buy_') && !customId.startsWith('verify_slip_')) {
+        logger.debug({ customId }, 'Ignored button (no valid prefix)');
+        return;
+    }
+
+    // Handle slip verification separately
+    if (customId.startsWith('verify_slip_')) {
+        await handleSlipVerification(interaction, logger);
         return;
     }
 
@@ -100,7 +107,19 @@ export async function handleButtonInteraction(
             .setImage(qr_code_url)
             .setFooter({ text: '⚠️ Role is assigned automatically after payment. Do NOT pay after expiration.' });
 
-        await interaction.editReply({ content: '', embeds: [embed] });
+        const verifyButton = new ButtonBuilder()
+            .setCustomId(`verify_slip_${data.order_id}`)
+            .setLabel('Submit Slip (ยืนยันสลิป)')
+            .setStyle(ButtonStyle.Secondary);
+
+        const row = new ActionRowBuilder<ButtonBuilder>()
+            .addComponents(verifyButton);
+
+        await interaction.editReply({
+            content: '',
+            embeds: [embed],
+            components: [row]
+        });
 
     } catch (err) {
         logger.error({ err }, 'Error handling button click');

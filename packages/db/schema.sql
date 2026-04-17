@@ -72,6 +72,15 @@ CREATE TABLE orders (
   omise_charge_id   VARCHAR(64),
   idempotency_key   VARCHAR(128) UNIQUE,
   expires_at        TIMESTAMPTZ NOT NULL,
+  
+  -- Slip Verification Tracking
+  slip_url          TEXT,
+  slip_trans_ref    VARCHAR(128) UNIQUE,
+  verification_provider VARCHAR(32),
+  verification_attempts INTEGER NOT NULL DEFAULT 0,
+  last_attempt_at   TIMESTAMPTZ,
+  verification_data JSONB NOT NULL DEFAULT '{}',
+
   role_assigned_at  TIMESTAMPTZ,
   created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

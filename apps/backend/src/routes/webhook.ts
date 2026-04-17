@@ -18,50 +18,19 @@ export const webhookRoutes: FastifyPluginAsync = async (fastify: any) => {
 
     fastify.post('/webhook/omise', async (request: any, reply: any) => {
         const reqLog = logger.child({ requestId: (request as any).requestId });
+
+        // ── 1. Verify HMAC Signature ────────────────────────────
+
         const rawBody = request.body as Buffer;
         const signature = request.headers['x-omise-webhook-signature'] as string | undefined;
-
-        // ── 1. Parse payload temporarily to find the charge ───────────
-
-        let initialPayload: any;
-        try {
-            initialPayload = JSON.parse(rawBody.toString('utf-8'));
-        } catch {
-            return reply.status(400).send({ error: 'Invalid JSON' });
-        }
-
-        const chargeId = initialPayload.data?.id;
-        if (!chargeId) {
-            reqLog.warn('Webhook payload missing charge ID');
-            return reply.status(200).send({ status: 'no_charge' });
-        }
-
-        // ── 2. Find the server and its webhook secret ─────────────────
-
-        const db = getSupabaseClient();
-        const { data: orderData } = await db
-            .from('orders')
-            .select('server_id, servers(omise_webhook_secret)')
-            .eq('omise_charge_id', chargeId)
-            .single();
-
-        if (!orderData) {
-            reqLog.warn({ chargeId }, 'Order not found for charge — cannot verify signature');
-            return reply.status(200).send({ status: 'order_not_found' });
-        }
-
-        const serverDoc = Array.isArray(orderData.servers) ? orderData.servers[0] : orderData.servers;
-        const webhookSecret = (serverDoc as any)?.omise_webhook_secret;
+        const webhookSecret = process.env.WEBHOOK_SECRET;
 
         if (!webhookSecret) {
-            reqLog.warn({ chargeId }, 'Webhook secret not configured for this server');
-            // If the user hasn't set up a secret, we can't verify. 
-            // Depending on strictness, we might reject or allow if not production.
-            if (process.env.NODE_ENV === 'production') {
-                return reply.status(401).send({ error: 'Webhook secret not configured' });
-            }
-        } else if (signature) {
-            // ── 3. Verify HMAC Signature ────────────────────────────
+            reqLog.error('WEBHOOK_SECRET not configured');
+            return reply.status(500).send({ error: 'Server configuration error' });
+        }
+
+        if (signature) {
             const expectedSignature = crypto
                 .createHmac('sha256', webhookSecret)
                 .update(rawBody)
@@ -74,16 +43,36 @@ export const webhookRoutes: FastifyPluginAsync = async (fastify: any) => {
                 reqLog.warn('Invalid webhook signature');
                 return reply.status(401).send({ error: 'Invalid signature' });
             }
-            reqLog.info('Signature verified successfully');
-        } else if (process.env.NODE_ENV === 'production') {
-            reqLog.warn('Missing webhook signature in production');
-            return reply.status(401).send({ error: 'Missing signature' });
+        } else {
+            // In production, you MUST require the signature
+            if (process.env.NODE_ENV === 'production') {
+                reqLog.warn('Missing webhook signature in production');
+                return reply.status(401).send({ error: 'Missing signature' });
+            }
+            reqLog.warn('No signature header — skipping verification (dev mode)');
         }
 
-        const payload = initialPayload as OmiseWebhookPayload;
-        reqLog.info({ eventId: payload.id, eventKey: payload.key }, 'Webhook received and verified');
+        // ── 2. Parse payload ────────────────────────────────────
+
+        let payload: OmiseWebhookPayload;
+        try {
+            payload = JSON.parse(rawBody.toString('utf-8'));
+        } catch {
+            return reply.status(400).send({ error: 'Invalid JSON' });
+        }
+
+        // Webhook Replay Protection: Reject events older than 5 minutes
+        const eventAgeMs = Date.now() - new Date(payload.created_at || new Date()).getTime();
+        if (eventAgeMs > 5 * 60 * 1000) {
+            reqLog.warn({ eventId: payload.id, eventAgeMs }, 'Webhook event too old (replay protection)');
+            return reply.status(400).send({ error: 'Event too old' });
+        }
+
+        reqLog.info({ eventId: payload.id, eventKey: payload.key }, 'Webhook received');
 
         // ── 3. Deduplicate events ───────────────────────────────
+
+        const db = getSupabaseClient();
 
         const { data: existingEvent } = await db
             .from('webhook_events')
@@ -109,6 +98,8 @@ export const webhookRoutes: FastifyPluginAsync = async (fastify: any) => {
         });
 
         // ── 5. Handle charge events ─────────────────────────────
+
+        const chargeId = payload.data?.id;
         if (!chargeId) {
             reqLog.warn('Webhook payload missing charge ID');
             return reply.status(200).send({ status: 'no_charge' });

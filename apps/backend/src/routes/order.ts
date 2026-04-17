@@ -10,6 +10,7 @@ import { createPromptPaySource, createCharge } from '../lib/omise';
 import { canAssignRole } from '../lib/discord';
 import { writeAuditLog } from '../lib/audit';
 import { logger } from '../lib/logger';
+import { verifySlip } from '../lib/slip/engine';
 
 // ── JSON Schema for input validation ───────────────────────
 
@@ -34,9 +35,7 @@ export const orderRoutes: FastifyPluginAsync = async (fastify: any) => {
         '/create-order',
         { schema: createOrderSchema },
         async (request: any, reply: any) => {
-            const body = request.body as any;
-            logger.info({ body }, 'Incoming /create-order request body');
-
+            const body = request.body as any; // Type override since we are using discord_guild_id
             const discord_guild_id = body.discord_guild_id;
             const { product_id, discord_user_id, idempotency_key, discord_channel_id, interaction_token } = body;
 
@@ -53,7 +52,7 @@ export const orderRoutes: FastifyPluginAsync = async (fastify: any) => {
             // Resolve server_id from discord_guild_id
             const { data: serverResult } = await db
                 .from('servers')
-                .select('id, promptpay_name, promptpay_account, omise_secret_key')
+                .select('id, promptpay_name, promptpay_account')
                 .eq('discord_guild_id', discord_guild_id)
                 .single();
 
@@ -160,35 +159,18 @@ export const orderRoutes: FastifyPluginAsync = async (fastify: any) => {
 
             // ── 5. Create Omise source + charge ───────────────────
 
-            if (!serverResult.omise_secret_key) {
-                reqLog.warn('Omise keys not configured for this server');
-                return reply.status(400).send({
-                    error: 'Payment not configured',
-                    message: 'This server has not configured their Omise payment keys yet.'
-                });
-            }
-
             let source, charge;
             try {
-                source = await createPromptPaySource(serverResult.omise_secret_key, product.price);
-                charge = await createCharge(serverResult.omise_secret_key, source.id, product.price, {
+                source = await createPromptPaySource(product.price);
+                charge = await createCharge(source.id, product.price, {
                     server_id,
                     product_id,
                     discord_user_id,
                 });
             } catch (err: any) {
-                reqLog.error({ err: err.message, code: err.code }, 'Omise API error');
-                const isAuthError = err.message?.toLowerCase().includes('authentication') || err.code === 'authentication_failure';
-                const errorMsg = isAuthError
-                    ? 'Omise Authentication Failed. Please check your Secret Key in Railway variables.'
-                    : (err.message || 'Payment gateway error');
-                return reply.status(isAuthError ? 401 : 502).send({
-                    error: 'Payment gateway error',
-                    message: errorMsg,
-                    detail: err.message
-                });
+                reqLog.error({ err: err.message }, 'Omise API error');
+                return reply.status(502).send({ error: 'Payment gateway error' });
             }
-
 
             // ── 6. Insert order ───────────────────────────────────
 
@@ -245,6 +227,52 @@ export const orderRoutes: FastifyPluginAsync = async (fastify: any) => {
             };
 
             return reply.status(201).send(response);
+        }
+    );
+
+    // ── Slip Verification Endpoint ───────────────────────────
+
+    fastify.post(
+        '/verify-slip',
+        {
+            schema: {
+                body: {
+                    type: 'object',
+                    required: ['order_id', 'slip_url', 'uploader_discord_id'],
+                    properties: {
+                        order_id: { type: 'string' },
+                        slip_url: { type: 'string' },
+                        uploader_discord_id: { type: 'string' },
+                    },
+                },
+            },
+        },
+        async (request: any, reply: any) => {
+            const { order_id, slip_url, uploader_discord_id } = request.body;
+            const reqLog = logger.child({ orderId: order_id, uploader_discord_id });
+
+            try {
+                const result = await verifySlip(order_id, uploader_discord_id, slip_url);
+
+                if (result.success) {
+                    return reply.send({
+                        success: true,
+                        message: 'Slip verified successfully',
+                        provider: result.provider
+                    });
+                } else {
+                    return reply.status(400).send({
+                        success: false,
+                        error: result.message || 'Verification failed'
+                    });
+                }
+            } catch (err: any) {
+                reqLog.error({ err }, 'Slip verification internal error');
+                return reply.status(500).send({
+                    success: false,
+                    error: 'Internal verification error'
+                });
+            }
         }
     );
 };
