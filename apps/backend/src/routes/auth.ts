@@ -93,7 +93,8 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
             const guildsCache = adminGuilds.map((g: any) => ({
                 id: g.id,
                 name: g.name,
-                icon: g.icon
+                icon: g.icon,
+                permissions: g.permissions // Include permissions for frontend checks
             }));
 
             // Step 4: Upsert User into Database (without tokens)
