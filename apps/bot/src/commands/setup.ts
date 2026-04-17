@@ -1,7 +1,7 @@
 import { ChatInputCommandInteraction } from 'discord.js';
 import { Logger } from 'pino';
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';
+const BACKEND_URL = process.env.BACKEND_URL || 'https://paynoybackend-production.up.railway.app';
 
 export async function handleSetupCommand(
     interaction: ChatInputCommandInteraction,
