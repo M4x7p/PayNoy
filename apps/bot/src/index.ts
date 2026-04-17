@@ -88,9 +88,18 @@ client.once(Events.ClientReady, (readyClient: any) => {
 // ── Interaction Handler ─────────────────────────────────────
 
 client.on(Events.InteractionCreate, async (interaction: any) => {
+    logger.info({
+        id: interaction.id,
+        type: interaction.type,
+        isButton: interaction.isButton(),
+        isCommand: interaction.isChatInputCommand(),
+        guildId: interaction.guildId
+    }, 'Received Interaction');
+
     try {
         // Handle button clicks
         if (interaction.isButton()) {
+            logger.info({ customId: interaction.customId }, 'Handling button interaction');
             await handleButtonInteraction(interaction, logger);
             return;
         }
