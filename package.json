@@ -11,6 +11,7 @@
     "dev:bot": "npm run dev -w apps/bot",
     "dev:web": "npm run dev -w apps/web",
     "build": "tsc --build",
+    "start": "npm start -w apps/bot",
     "lint": "eslint . --ext .ts,.tsx"
   },
   "devDependencies": {
