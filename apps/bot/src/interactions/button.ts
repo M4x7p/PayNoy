@@ -33,7 +33,16 @@ export async function handleButtonInteraction(
 
     // Defer reply as API call might take a moment
     logger.info({ guildId, productId }, 'Deferring interaction reply');
-    await interaction.deferReply({ ephemeral: true });
+    try {
+        await interaction.deferReply({ ephemeral: true });
+        logger.info('Interaction reply deferred successfully');
+
+        // Immediate status update to user
+        await interaction.editReply({ content: '⏳ **กำลังสร้าง QR Code...** (Contacting payment system)' });
+    } catch (err) {
+        logger.error({ err }, 'Failed to defer or edit initial reply');
+        return;
+    }
 
     try {
         const idempotencyKey = uuidv4();
