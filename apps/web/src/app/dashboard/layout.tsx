@@ -63,6 +63,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                 // Load guilds with fresh bot status check
                 const { guilds: g } = await api.refreshGuilds();
+                console.log('[Dashboard] Raw guilds from API:', g);
                 setGuilds(g);
 
                 // Auto-select first bot-present guild
@@ -115,7 +116,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         );
     }
 
+    console.log('[Dashboard] Rendering with guilds:', guilds);
     const botGuilds = guilds.filter((g: any) => g.bot_present);
+    console.log('[Dashboard] Bot guilds:', botGuilds);
     const currentGuild = guilds.find((g: any) => g.id === activeServerId);
 
     return (
