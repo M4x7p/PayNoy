@@ -7,6 +7,12 @@ const client = axios.create({
     withCredentials: true, // Required for httpOnly cookies
 });
 
+// Force credentials on every request to bypass potential Axios instance issues
+client.interceptors.request.use((config) => {
+    config.withCredentials = true;
+    return config;
+});
+
 // Interceptor to handle errors
 client.interceptors.response.use(
     (response) => response,

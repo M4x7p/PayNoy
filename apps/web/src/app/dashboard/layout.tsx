@@ -117,8 +117,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
 
     console.log('[Dashboard] Rendering with guilds:', guilds);
+    console.log('[Dashboard] Bot presence check on first guild:', guilds[0]?.name, 'bot_present:', guilds[0]?.bot_present);
     const botGuilds = guilds.filter((g: any) => g.bot_present);
-    console.log('[Dashboard] Bot guilds:', botGuilds);
+    console.log('[Dashboard] Bot guilds count:', botGuilds.length);
     const currentGuild = guilds.find((g: any) => g.id === activeServerId);
 
     return (
@@ -154,6 +155,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </nav>
 
                     <div className="dash-sidebar-footer">
+                        <div className="dash-version-tag">v2.0.1 (DEBUG)</div>
                         <button onClick={handleLogout} className="dash-logout-btn">
                             🚪 ออกจากระบบ
                         </button>
