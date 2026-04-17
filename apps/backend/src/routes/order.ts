@@ -34,7 +34,9 @@ export const orderRoutes: FastifyPluginAsync = async (fastify: any) => {
         '/create-order',
         { schema: createOrderSchema },
         async (request: any, reply: any) => {
-            const body = request.body as any; // Type override since we are using discord_guild_id
+            const body = request.body as any;
+            logger.info({ body }, 'Incoming /create-order request body');
+
             const discord_guild_id = body.discord_guild_id;
             const { product_id, discord_user_id, idempotency_key, discord_channel_id, interaction_token } = body;
 

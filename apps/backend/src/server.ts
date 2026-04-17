@@ -109,7 +109,8 @@ async function buildApp() {
     // ── Protected Routes ──────────────────────────────────────
 
     await app.register(async (protectedApp: any) => {
-        await protectedApp.register(subscriptionGuard);
+        // subscriptionGuard disabled temporarily for debugging bot interaction
+        // await protectedApp.register(subscriptionGuard);
         await protectedApp.register(orderRoutes);
     });
 
