@@ -315,6 +315,8 @@ export const dashboardRoutes: FastifyPluginAsync = async (app) => {
                     (button as any).emoji = { name: btnConfig.emoji };
                 }
 
+                logger.info({ pid, channel_id, embed: !!embed.image }, 'Posting product to Discord');
+
                 const res = await fetch(`${DISCORD_API_BASE}/channels/${channel_id}/messages`, {
                     method: 'POST',
                     headers: {
@@ -331,11 +333,22 @@ export const dashboardRoutes: FastifyPluginAsync = async (app) => {
                 });
 
                 if (!res.ok) {
-                    const err = await res.json() as any;
-                    logger.error({ err, pid, channel_id }, 'Failed to post product to Discord');
-                    return reply.status(res.status).send({ error: 'Discord API error', detail: err });
+                    const errBody = await res.text();
+                    let errDetail;
+                    try {
+                        errDetail = JSON.parse(errBody);
+                    } catch {
+                        errDetail = errBody;
+                    }
+                    logger.error({ err: errDetail, pid, channel_id, status: res.status }, 'Discord API error during product posting');
+                    return reply.status(res.status).send({
+                        error: 'Discord API error',
+                        message: `Discord returned ${res.status}: ${errDetail.message || 'Unknown error'}`,
+                        detail: errDetail
+                    });
                 }
 
+                logger.info({ pid, channel_id }, 'Product posted successfully to Discord');
                 return reply.send({ success: true });
             });
         });

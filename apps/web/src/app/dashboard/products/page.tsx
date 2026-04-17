@@ -145,10 +145,13 @@ export default function ProductsPage() {
             alert('โพสต์สินค้าลง Discord สำเร็จ!');
             setPostModalOpen(false);
         } catch (err: any) {
-            alert(err.message || 'เกิดข้อผิดพลาดในการโพสต์');
+            console.error('Failed to post product:', err);
+            const errorMsg = err.detail?.message || err.message || 'เกิดข้อผิดพลาดในการโพสต์';
+            alert(`ไม่สามารถโพสต์สินค้าได้: ${errorMsg}\n\n(Status: ${err.status})`);
         }
         setIsPosting(false);
     };
+
 
     if (loading) {
         return <div className="dash-page-loading"><div className="dash-spinner" /><p>กำลังโหลด...</p></div>;
