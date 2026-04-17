@@ -176,7 +176,10 @@ export default function ProductsPage() {
                 <div className="dash-product-grid">
                     {products.map((p: any) => (
                         <div key={p.id} className="dash-product-card">
-                            <div className="dash-product-header" style={{ borderLeftColor: `#${(p.embed_json?.color || 5793266).toString(16).padStart(6, '0')}` }}>
+                            <div
+                                className="dash-product-header"
+                                style={{ borderLeftColor: `#${(p.embed_json?.color || 5793266).toString(16).padStart(6, '0')}` }}
+                            >
                                 <h3>{p.name}</h3>
                                 <span className="dash-product-price">{formatBaht(p.price)}</span>
                             </div>
@@ -251,7 +254,12 @@ export default function ProductsPage() {
                                 </label>
                                 <label>
                                     <span>สไตล์ของปุ่ม (Color)</span>
-                                    <select value={form.button_config.style} onChange={(e) => setForm({ ...form, button_config: { ...form.button_config, style: e.target.value } })} className="dash-input">
+                                    <select
+                                        title="ปุ่มสไตล์"
+                                        value={form.button_config.style}
+                                        onChange={(e) => setForm({ ...form, button_config: { ...form.button_config, style: e.target.value } })}
+                                        className="dash-input"
+                                    >
                                         <option value="1">Primary (Blue)</option>
                                         <option value="2">Secondary (Gray)</option>
                                         <option value="3">Success (Green)</option>
@@ -267,7 +275,7 @@ export default function ProductsPage() {
                                     {form.embed_json.title && <div className="embed-title">{form.embed_json.title}</div>}
                                     {form.embed_json.description && <div className="embed-desc">{form.embed_json.description}</div>}
                                     {form.embed_json.image && (
-                                        <img src={form.embed_json.image} alt="embed" className="embed-image" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                                        <img src={form.embed_json.image} alt="embed" className="embed-image" />
                                     )}
                                     <div className="embed-footer">
                                         <span>💰 {form.price || '0'} บาท</span>
@@ -296,7 +304,12 @@ export default function ProductsPage() {
                         <h2>โพสต์สินค้าลง Discord</h2>
                         <div className="dash-modal-body">
                             <p>เลือก Channel ที่ต้องการให้บอทส่งข้อความสินค้าชิ้นนี้ไป:</p>
-                            <select value={selectedChannelId} onChange={(e) => setSelectedChannelId(e.target.value)} className="dash-input">
+                            <select
+                                title="เลือก Channel"
+                                value={selectedChannelId}
+                                onChange={(e) => setSelectedChannelId(e.target.value)}
+                                className="dash-input"
+                            >
                                 {channels.map(c => <option key={c.id} value={c.id}># {c.name}</option>)}
                                 {channels.length === 0 && <option disabled>กำลังโหลด Channel...</option>}
                             </select>
@@ -310,6 +323,72 @@ export default function ProductsPage() {
                     </div>
                 </div>
             )}
+
+            <style jsx>{`
+                .dash-page { padding: 40px; max-width: 1200px; margin: 0 auto; }
+                .dash-page-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 30px; }
+                .dash-page-title { font-size: 28px; font-weight: 700; color: #1e293b; margin-bottom: 4px; }
+                .dash-page-subtitle { color: #64748b; }
+                
+                .dash-btn-primary { background: #5865f2; color: white; padding: 10px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; }
+                .dash-btn-primary:hover { background: #4752c4; transform: translateY(-2px); }
+                .dash-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+                .dash-empty-card { background: white; padding: 60px; border-radius: 16px; text-align: center; border: 2px dashed #e2e8f0; color: #64748b; }
+
+                .dash-product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; }
+                .dash-product-card { background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05); border: 1px solid #e2e8f0; overflow: hidden; display: flex; flex-direction: column; }
+                .dash-product-header { padding: 20px; border-left: 6px solid #5865f2; display: flex; justify-content: space-between; align-items: flex-start; }
+                .dash-product-header h3 { font-size: 18px; font-weight: 600; color: #1e293b; }
+                .dash-product-price { font-weight: 700; color: #10b981; }
+
+                .dash-product-body { padding: 0 20px 20px; flex: 1; }
+                .dash-product-meta { font-size: 13px; color: #64748b; margin-top: 4px; }
+                .dash-product-meta code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; }
+
+                .dash-product-actions { padding: 16px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; gap: 8px; }
+                .dash-btn-sm { padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid #e2e8f0; background: white; color: #475569; transition: all 0.2s; }
+                .dash-btn-sm:hover { border-color: #cbd5e1; background: #f1f5f9; }
+                .dash-btn-sm.danger:hover { color: #ef4444; border-color: #fca5a5; background: #fef2f2; }
+                .dash-btn-sm.discord { background: #5865f2; color: white; border: none; }
+                .dash-btn-sm.discord:hover { background: #4752c4; }
+
+                .dash-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
+                .dash-modal { background: white; border-radius: 20px; padding: 32px; width: 100%; max-width: 900px; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25); }
+                .dash-modal.sm { max-width: 450px; }
+                .dash-modal h2 { font-size: 24px; font-weight: 700; margin-bottom: 24px; color: #1e293b; }
+
+                .dash-modal-body { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+                .dash-modal.sm .dash-modal-body { display: block; }
+                .dash-modal-form label { display: block; margin-bottom: 16px; }
+                .dash-modal-form label span { display: block; font-size: 14px; font-weight: 500; color: #64748b; margin-bottom: 6px; }
+                .dash-input { width: 100%; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 15px; }
+                .dash-input:focus { outline: none; border-color: #5865f2; ring: 2px solid #5865f244; }
+                .dash-textarea { height: 100px; resize: none; }
+                .dash-divider { border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0; }
+
+                .dash-color-row { display: flex; align-items: center; gap: 12px; }
+                .dash-color-input { width: 44px; height: 32px; border: none; padding: 0; background: none; cursor: pointer; }
+                .dash-color-hex { font-family: monospace; font-size: 14px; color: #64748b; }
+
+                .dash-embed-preview { background: #f8fafc; border-radius: 12px; padding: 24px; border: 1px solid #e2e8f0; }
+                .dash-embed-preview h4 { margin-bottom: 16px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; }
+                .embed-card { background: #2f3136; border-radius: 4px; padding: 12px 16px; border-left: 4px solid #5865f2; color: #dcddde; }
+                .embed-title { font-weight: 600; font-size: 16px; color: white; margin-bottom: 8px; }
+                .embed-desc { font-size: 14px; line-height: 1.4; }
+                .embed-image { border-radius: 4px; margin-top: 16px; max-height: 200px; width: 100%; object-fit: cover; }
+                .embed-footer { margin-top: 12px; font-size: 13px; color: #b9bbbe; }
+
+                .discord-preview-btn { margin-top: 16px; padding: 10px 16px; border-radius: 3px; font-weight: 500; font-size: 14px; border: none; cursor: default; width: auto; color: white; }
+                .btn-style-1 { background: #5865f2; }
+                .btn-style-2 { background: #4f545c; }
+                .btn-style-3 { background: #3ba55c; }
+                .btn-style-4 { background: #ed4245; }
+
+                .dash-modal-footer { display: flex; justify-content: flex-end; gap: 12px; margin-top: 32px; padding-top: 24px; border-top: 1px solid #e2e8f0; }
+                .dash-btn-ghost { background: transparent; padding: 10px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; color: #64748b; border: none; }
+                .dash-btn-ghost:hover { background: #f1f5f9; }
+            `}</style>
         </div>
     );
 }
