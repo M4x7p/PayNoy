@@ -127,26 +127,16 @@ client.on(Events.InteractionCreate, async (interaction: any) => {
     }
 });
 
-// ── Start (DIAGNOSTIC MINIMAL MODE) ───────────────────────────
+// ── Start ───────────────────────────────────────────────────
 
 async function start() {
-    logger.info({
-        hasToken: !!DISCORD_BOT_TOKEN,
-        hasClientId: !!DISCORD_CLIENT_ID,
-        nodeVersion: process.version,
-        env: process.env.NODE_ENV
-    }, 'Bot diagnostic startup initiated');
-
+    logger.info('🚀 PayNoy bot starting...');
     try {
-        // Temporarily skip command registration to avoid API issues on boot
-        logger.info('Skipping command registration for diagnostics...');
-
-        logger.info('Attempting Discord login...');
+        await registerCommands();
         await client.login(DISCORD_BOT_TOKEN);
-
-        logger.info('🚀 PayNoy bot login command sent successfully');
+        logger.info('🤖 Bot logged in and ready');
     } catch (err: any) {
-        logger.fatal({ err: err.message, stack: err.stack }, 'FAILED TO LOGIN TO DISCORD');
+        logger.fatal({ err: err.message, stack: err.stack }, 'FAILED TO START BOT');
         process.exit(1);
     }
 }
