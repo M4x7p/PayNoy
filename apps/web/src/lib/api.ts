@@ -7,16 +7,16 @@ const client = axios.create({
     withCredentials: true, // Required for httpOnly cookies
 });
 
-// Force credentials on every request to bypass potential Axios instance issues
-client.interceptors.request.use((config) => {
+// Force credentials on every request
+client.interceptors.request.use((config: any) => {
     config.withCredentials = true;
     return config;
 });
 
 // Interceptor to handle errors
 client.interceptors.response.use(
-    (response) => response,
-    (error) => {
+    (response: any) => response,
+    (error: any) => {
         if (error.response?.status === 401) {
             // Unauthenticated
         }
@@ -29,7 +29,8 @@ export const api = {
      * Get current user profile
      */
     async getMe() {
-        const { data } = await client.get('/api/me');
+        // Cache bust for Vercel edge/CDN
+        const { data } = await client.get(`/api/me?t=${Date.now()}`);
         return { user: data };
     },
 
@@ -38,7 +39,7 @@ export const api = {
      * In this implementation, we return the cached guilds from the user profile
      */
     async refreshGuilds() {
-        const { data } = await client.get('/api/me');
+        const { data } = await client.get(`/api/me?t=${Date.now()}`);
         // The backend auth/callback already populates guilds_cache
         // Here we can simply return what is in the cache
         return { guilds: data.guilds_cache || [] };

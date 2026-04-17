@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "axios": "^1.6.7",
     "@paynoy/db": "^1.0.0",
     "@paynoy/types": "^1.0.0",
     "next": "16.2.3",
