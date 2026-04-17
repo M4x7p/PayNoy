@@ -44,11 +44,23 @@ export const dashboardRoutes: FastifyPluginAsync = async (fastify) => {
 
         const activeGuildIds = new Set(ownedServers?.map(s => s.discord_guild_id) || []);
 
-        // Enrich guilds_cache with bot_present flag
-        const enrichedGuilds = (data.guilds_cache || []).map((g: any) => ({
-            ...g,
-            bot_present: activeGuildIds.has(g.id)
-        }));
+        // Enrich guilds_cache with bot_present flag and safe permissions bitmask
+        const enrichedGuilds = (data.guilds_cache || []).map((g: any) => {
+            const perms = BigInt(g.permissions || '0');
+            const isAdmin = (perms & BigInt(0x8)) !== BigInt(0);
+            const manageGuild = (perms & BigInt(0x20)) !== BigInt(0);
+
+            // Construct a safe bitmask for the frontend that won't overflow Number
+            let safePerms = 0;
+            if (isAdmin) safePerms |= 0x8;
+            if (manageGuild) safePerms |= 0x20;
+
+            return {
+                ...g,
+                bot_present: activeGuildIds.has(g.id),
+                permissions: safePerms.toString()
+            };
+        });
 
         // Return user data along with their enriched guilds_cache
         return {
