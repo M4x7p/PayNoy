@@ -127,12 +127,28 @@ client.on(Events.InteractionCreate, async (interaction: any) => {
     }
 });
 
-// ── Start ───────────────────────────────────────────────────
+// ── Start (DIAGNOSTIC MINIMAL MODE) ───────────────────────────
 
 async function start() {
-    await registerCommands();
-    await client.login(DISCORD_BOT_TOKEN);
-    logger.info('🚀 PayNoy bot starting...');
+    logger.info({
+        hasToken: !!DISCORD_BOT_TOKEN,
+        hasClientId: !!DISCORD_CLIENT_ID,
+        nodeVersion: process.version,
+        env: process.env.NODE_ENV
+    }, 'Bot diagnostic startup initiated');
+
+    try {
+        // Temporarily skip command registration to avoid API issues on boot
+        logger.info('Skipping command registration for diagnostics...');
+
+        logger.info('Attempting Discord login...');
+        await client.login(DISCORD_BOT_TOKEN);
+
+        logger.info('🚀 PayNoy bot login command sent successfully');
+    } catch (err: any) {
+        logger.fatal({ err: err.message, stack: err.stack }, 'FAILED TO LOGIN TO DISCORD');
+        process.exit(1);
+    }
 }
 
 process.on('unhandledRejection', (reason, promise) => {
