@@ -83,7 +83,15 @@ export const api = {
             `/api/server/${serverId}/orders`, { params: { page, limit } }
         ),
 
-    completeOnboarding: (data: { guild_id: string; guild_name: string; promptpay_name: string; promptpay_account: string }) =>
+    completeOnboarding: (data: {
+        guild_id: string;
+        guild_name: string;
+        promptpay_name: string;
+        promptpay_account: string;
+        omise_secret_key?: string;
+        omise_public_key?: string;
+        omise_webhook_secret?: string;
+    }) =>
         request('/api/onboarding/complete', { method: 'POST', body: JSON.stringify(data) }),
 
     // Discord Utils

@@ -13,6 +13,9 @@ export default function OnboardingPage() {
     const [selectedGuild, setSelectedGuild] = useState<any>(null);
     const [promptpayName, setPromptpayName] = useState('');
     const [promptpayAccount, setPromptpayAccount] = useState('');
+    const [omiseSecretKey, setOmiseSecretKey] = useState('');
+    const [omisePublicKey, setOmisePublicKey] = useState('');
+    const [omiseWebhookSecret, setOmiseWebhookSecret] = useState('');
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
@@ -82,7 +85,7 @@ export default function OnboardingPage() {
     }, [step, selectedGuild?.id]);
 
     const handleComplete = async () => {
-        if (!promptpayName || !promptpayAccount) return;
+        if (!promptpayName || !promptpayAccount || !omiseSecretKey || !omisePublicKey) return;
         setSaving(true);
         try {
             await api.completeOnboarding({
@@ -90,6 +93,9 @@ export default function OnboardingPage() {
                 guild_name: selectedGuild.name,
                 promptpay_name: promptpayName,
                 promptpay_account: promptpayAccount,
+                omise_secret_key: omiseSecretKey,
+                omise_public_key: omisePublicKey,
+                omise_webhook_secret: omiseWebhookSecret,
             });
             router.push('/dashboard');
         } catch (err) {
@@ -201,9 +207,48 @@ export default function OnboardingPage() {
                                     className="onboarding-input"
                                 />
                             </label>
+
+                            <hr style={{ margin: '1rem 0', opacity: 0.1 }} />
+
+                            <h3 style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>🔐 ตั้งค่า Omise (สำหรับเจ้าของเซิร์ฟเวอร์)</h3>
+                            <p style={{ fontSize: '0.8rem', opacity: 0.7, marginBottom: '1rem' }}>เงินจะเข้าบัญชี Omise ของคุณโดยตรง</p>
+
+                            <label>
+                                <span>Omise Public Key</span>
+                                <input
+                                    type="text"
+                                    placeholder="pkey_test_..."
+                                    value={omisePublicKey}
+                                    onChange={(e) => setOmisePublicKey(e.target.value)}
+                                    className="onboarding-input"
+                                />
+                            </label>
+
+                            <label>
+                                <span>Omise Secret Key</span>
+                                <input
+                                    type="password"
+                                    placeholder="skey_test_..."
+                                    value={omiseSecretKey}
+                                    onChange={(e) => setOmiseSecretKey(e.target.value)}
+                                    className="onboarding-input"
+                                />
+                            </label>
+
+                            <label>
+                                <span>Omise Webhook Secret (ถ้ามี)</span>
+                                <input
+                                    type="password"
+                                    placeholder="whs_..."
+                                    value={omiseWebhookSecret}
+                                    onChange={(e) => setOmiseWebhookSecret(e.target.value)}
+                                    className="onboarding-input"
+                                />
+                            </label>
+
                             <button
                                 onClick={handleComplete}
-                                disabled={!promptpayName || !promptpayAccount || saving}
+                                disabled={!promptpayName || !promptpayAccount || !omiseSecretKey || !omisePublicKey || saving}
                                 className="onboarding-submit"
                             >
                                 {saving ? 'กำลังบันทึก...' : '✓ เสร็จสิ้น เริ่มใช้งาน'}

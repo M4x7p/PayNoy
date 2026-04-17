@@ -33,11 +33,22 @@ export const dashboardRoutes: FastifyPluginAsync = async (app) => {
         });
 
         protectedApp.post('/onboarding/complete', async (request, reply) => {
-            const { guild_id, guild_name, promptpay_name, promptpay_account } = request.body as {
+            const {
+                guild_id,
+                guild_name,
+                promptpay_name,
+                promptpay_account,
+                omise_secret_key,
+                omise_public_key,
+                omise_webhook_secret
+            } = request.body as {
                 guild_id: string;
                 guild_name: string;
                 promptpay_name: string;
                 promptpay_account: string;
+                omise_secret_key?: string;
+                omise_public_key?: string;
+                omise_webhook_secret?: string;
             };
 
             if (!guild_id || !promptpay_name || !promptpay_account) {
@@ -53,6 +64,9 @@ export const dashboardRoutes: FastifyPluginAsync = async (app) => {
                 owner_id: userId,
                 promptpay_name,
                 promptpay_account,
+                omise_secret_key,
+                omise_public_key,
+                omise_webhook_secret,
             }, { onConflict: 'discord_guild_id' });
 
             if (serverError) {
@@ -158,10 +172,24 @@ export const dashboardRoutes: FastifyPluginAsync = async (app) => {
 
             serverApp.post('/server/:id/settings', async (request, reply) => {
                 const serverId = (request as any).serverId;
-                const { promptpay_name, promptpay_account, support_channel_id } = request.body as any;
+                const {
+                    promptpay_name,
+                    promptpay_account,
+                    support_channel_id,
+                    omise_secret_key,
+                    omise_public_key,
+                    omise_webhook_secret
+                } = request.body as any;
 
                 const db = getSupabaseClient();
-                await db.from('servers').update({ promptpay_name, promptpay_account, support_channel_id }).eq('id', serverId);
+                await db.from('servers').update({
+                    promptpay_name,
+                    promptpay_account,
+                    support_channel_id,
+                    omise_secret_key,
+                    omise_public_key,
+                    omise_webhook_secret
+                }).eq('id', serverId);
                 return reply.send({ success: true });
             });
 

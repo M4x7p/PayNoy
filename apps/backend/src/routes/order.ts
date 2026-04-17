@@ -53,7 +53,7 @@ export const orderRoutes: FastifyPluginAsync = async (fastify: any) => {
             // Resolve server_id from discord_guild_id
             const { data: serverResult } = await db
                 .from('servers')
-                .select('id, promptpay_name, promptpay_account')
+                .select('id, promptpay_name, promptpay_account, omise_secret_key')
                 .eq('discord_guild_id', discord_guild_id)
                 .single();
 
@@ -160,10 +160,18 @@ export const orderRoutes: FastifyPluginAsync = async (fastify: any) => {
 
             // ── 5. Create Omise source + charge ───────────────────
 
+            if (!serverResult.omise_secret_key) {
+                reqLog.warn('Omise keys not configured for this server');
+                return reply.status(400).send({
+                    error: 'Payment not configured',
+                    message: 'This server has not configured their Omise payment keys yet.'
+                });
+            }
+
             let source, charge;
             try {
-                source = await createPromptPaySource(product.price);
-                charge = await createCharge(source.id, product.price, {
+                source = await createPromptPaySource(serverResult.omise_secret_key, product.price);
+                charge = await createCharge(serverResult.omise_secret_key, source.id, product.price, {
                     server_id,
                     product_id,
                     discord_user_id,

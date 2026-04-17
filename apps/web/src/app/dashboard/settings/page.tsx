@@ -9,6 +9,9 @@ export default function SettingsPage() {
     const [promptpayName, setPromptpayName] = useState('');
     const [promptpayAccount, setPromptpayAccount] = useState('');
     const [supportChannelId, setSupportChannelId] = useState('');
+    const [omiseSecretKey, setOmiseSecretKey] = useState('');
+    const [omisePublicKey, setOmisePublicKey] = useState('');
+    const [omiseWebhookSecret, setOmiseWebhookSecret] = useState('');
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
@@ -18,6 +21,9 @@ export default function SettingsPage() {
         setPromptpayName(activeServer.promptpay_name || '');
         setPromptpayAccount(activeServer.promptpay_account || '');
         setSupportChannelId(activeServer.support_channel_id || '');
+        setOmiseSecretKey(activeServer.omise_secret_key || '');
+        setOmisePublicKey(activeServer.omise_public_key || '');
+        setOmiseWebhookSecret(activeServer.omise_webhook_secret || '');
         setLoading(false);
     }, [activeServer]);
 
@@ -34,6 +40,9 @@ export default function SettingsPage() {
                 promptpay_name: promptpayName,
                 promptpay_account: promptpayAccount,
                 support_channel_id: supportChannelId,
+                omise_secret_key: omiseSecretKey,
+                omise_public_key: omisePublicKey,
+                omise_webhook_secret: omiseWebhookSecret,
             });
             setSaved(true);
             setTimeout(() => setSaved(false), 3000);
@@ -94,6 +103,40 @@ export default function SettingsPage() {
                         placeholder="เช่น 1234567890123456789"
                     />
                     <p className="dash-settings-hint">Channel ที่จะส่งข้อความแจ้งเตือนเมื่อมีคำสั่งซื้อ</p>
+                </label>
+            </div>
+
+            <div className="dash-settings-card">
+                <h2>Omise Credentials</h2>
+                <label>
+                    <span>Omise Public Key</span>
+                    <input
+                        type="text"
+                        value={omisePublicKey}
+                        onChange={(e) => setOmisePublicKey(e.target.value)}
+                        className="dash-input"
+                        placeholder="pkey_test_..."
+                    />
+                </label>
+                <label>
+                    <span>Omise Secret Key</span>
+                    <input
+                        type="password"
+                        value={omiseSecretKey}
+                        onChange={(e) => setOmiseSecretKey(e.target.value)}
+                        className="dash-input"
+                        placeholder="skey_test_..."
+                    />
+                </label>
+                <label>
+                    <span>Omise Webhook Secret</span>
+                    <input
+                        type="password"
+                        value={omiseWebhookSecret}
+                        onChange={(e) => setOmiseWebhookSecret(e.target.value)}
+                        className="dash-input"
+                        placeholder="whs_..."
+                    />
                 </label>
             </div>
 
