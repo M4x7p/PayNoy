@@ -63,10 +63,12 @@ export const dashboardRoutes: FastifyPluginAsync = async (fastify) => {
         });
 
         // Return user data along with their enriched guilds_cache
-        return {
+        const responseData = {
             ...data,
             guilds_cache: enrichedGuilds
         };
+        logger.info({ userId: user.id, guildsCount: enrichedGuilds.length }, 'Returning enriched user profile');
+        return responseData;
     });
 
     /**
