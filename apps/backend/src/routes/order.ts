@@ -169,9 +169,18 @@ export const orderRoutes: FastifyPluginAsync = async (fastify: any) => {
                     discord_user_id,
                 });
             } catch (err: any) {
-                reqLog.error({ err: err.message }, 'Omise API error');
-                return reply.status(502).send({ error: 'Payment gateway error' });
+                reqLog.error({ err: err.message, code: err.code }, 'Omise API error');
+                const isAuthError = err.message?.toLowerCase().includes('authentication') || err.code === 'authentication_failure';
+                const errorMsg = isAuthError
+                    ? 'Omise Authentication Failed. Please check your Secret Key in Railway variables.'
+                    : (err.message || 'Payment gateway error');
+                return reply.status(isAuthError ? 401 : 502).send({
+                    error: 'Payment gateway error',
+                    message: errorMsg,
+                    detail: err.message
+                });
             }
+
 
             // ── 6. Insert order ───────────────────────────────────
 
