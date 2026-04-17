@@ -1825,8 +1825,15 @@ b {
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 1; }
+
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+
+  50% {
+    opacity: 1;
+  }
 }
 
 /* Form */
@@ -1911,4 +1918,70 @@ b {
   .dash-modal-body {
     grid-template-columns: 1fr;
   }
+}
+
+/* ── Discord Product Preview Styles ────────────────────────── */
+.discord-preview-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 3px;
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: default;
+  margin-top: 12px;
+  transition: opacity 0.2s;
+}
+
+.btn-style-1 {
+  background-color: #5865f2;
+}
+
+/* Blurple / Primary */
+.btn-style-1:hover {
+  background-color: #4752c4;
+}
+
+.btn-style-2 {
+  background-color: #4f545c;
+}
+
+/* Gray / Secondary */
+.btn-style-2:hover {
+  background-color: #5d6269;
+}
+
+.btn-style-3 {
+  background-color: #43b581;
+}
+
+/* Green / Success */
+.btn-style-3:hover {
+  background-color: #3ca374;
+}
+
+.btn-style-4 {
+  background-color: #f04747;
+}
+
+/* Red / Danger */
+.btn-style-4:hover {
+  background-color: #d84040;
+}
+
+.dash-btn-sm.discord {
+  background: #5865f2;
+}
+
+.dash-btn-sm.discord:hover {
+  background: #4752c4;
+}
+
+.dash-modal.sm {
+  max-width: 400px;
 }

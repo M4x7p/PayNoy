@@ -241,6 +241,103 @@ export const dashboardRoutes: FastifyPluginAsync = async (app) => {
 
                 return reply.send({ orders, total: count, page, limit });
             });
+
+            // -----------------------------------------------------
+            // Discord Utils
+            // -----------------------------------------------------
+
+            serverApp.get('/server/:id/channels', async (request, reply) => {
+                const serverId = (request as any).serverId;
+                const db = getSupabaseClient();
+                const { data: server } = await db.from('servers').select('discord_guild_id').eq('id', serverId).single();
+
+                if (!server) return reply.status(404).send({ error: 'Server not found' });
+
+                const botToken = process.env.DISCORD_BOT_TOKEN;
+                if (!botToken) return reply.status(500).send({ error: 'DISCORD_BOT_TOKEN not configured' });
+
+                const res = await fetch(`${DISCORD_API_BASE}/guilds/${server.discord_guild_id}/channels`, {
+                    headers: { Authorization: `Bot ${botToken}` }
+                });
+
+                if (!res.ok) {
+                    const err = await res.json() as any;
+                    return reply.status(res.status).send({ error: 'Discord API error', detail: err });
+                }
+
+                const channels = await res.json() as any[];
+                return reply.send({
+                    channels: channels
+                        .filter(c => (c.type === 0 || c.type === 5)) // Text or Announcement
+                        .map(c => ({ id: c.id, name: c.name }))
+                });
+            });
+
+            serverApp.post('/server/:id/products/:pid/post', async (request, reply) => {
+                const serverId = (request as any).serverId;
+                const { pid } = request.params as { id: string; pid: string };
+                const { channel_id } = request.body as { channel_id: string };
+
+                if (!channel_id) return reply.status(400).send({ error: 'channel_id is required' });
+
+                const db = getSupabaseClient();
+                const { data: product } = await db.from('products').select('*').eq('id', pid).eq('server_id', serverId).single();
+
+                if (!product) return reply.status(404).send({ error: 'Product not found' });
+
+                const botToken = process.env.DISCORD_BOT_TOKEN;
+                if (!botToken) return reply.status(500).send({ error: 'DISCORD_BOT_TOKEN not configured' });
+
+                // Build Embed
+                const embed: any = {
+                    title: product.embed_json?.title || product.name,
+                    description: product.embed_json?.description || undefined,
+                    color: product.embed_json?.color || 5793266, // Default Blurple
+                    fields: [
+                        { name: 'ราคา', value: `฿ ${(product.price / 100).toFixed(2)}`, inline: true }
+                    ]
+                };
+
+                if (product.embed_json?.image) {
+                    embed.image = { url: product.embed_json.image };
+                }
+
+                // Build Button
+                const btnConfig = product.button_config || {};
+                const button = {
+                    type: 2, // BUTTON
+                    style: btnConfig.style ? parseInt(btnConfig.style) : 1, // PRIMARY
+                    label: btnConfig.label || 'สั่งซื้อสินค้า',
+                    custom_id: `buy_${product.id}`
+                };
+
+                if (btnConfig.emoji) {
+                    (button as any).emoji = { name: btnConfig.emoji };
+                }
+
+                const res = await fetch(`${DISCORD_API_BASE}/channels/${channel_id}/messages`, {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bot ${botToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        embeds: [embed],
+                        components: [{
+                            type: 1, // ACTION_ROW
+                            components: [button]
+                        }]
+                    })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json() as any;
+                    logger.error({ err, pid, channel_id }, 'Failed to post product to Discord');
+                    return reply.status(res.status).send({ error: 'Discord API error', detail: err });
+                }
+
+                return reply.send({ success: true });
+            });
         });
     }, { prefix: '/api' });
 };

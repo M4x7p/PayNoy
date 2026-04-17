@@ -86,6 +86,14 @@ export const api = {
     completeOnboarding: (data: { guild_id: string; guild_name: string; promptpay_name: string; promptpay_account: string }) =>
         request('/api/onboarding/complete', { method: 'POST', body: JSON.stringify(data) }),
 
+    // Discord Utils
+    getChannels: (serverId: string) => request<{ channels: any[] }>(`/api/server/${serverId}/channels`),
+    postProduct: (serverId: string, productId: string, channelId: string) =>
+        request<{ success: true }>(`/api/server/${serverId}/products/${productId}/post`, {
+            method: 'POST',
+            body: JSON.stringify({ channel_id: channelId })
+        }),
+
     // Bot invite URL
     getBotInviteUrl: (guildId: string) =>
         `https://discord.com/oauth2/authorize?client_id=1493590565504286740&permissions=268435456&scope=bot%20applications.commands&guild_id=${guildId}`,
