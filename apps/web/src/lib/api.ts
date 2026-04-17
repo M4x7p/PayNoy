@@ -96,7 +96,7 @@ export const api = {
 
     // Bot invite URL
     getBotInviteUrl: (guildId: string) =>
-        `https://discord.com/oauth2/authorize?client_id=1493590565504286740&permissions=268435456&scope=bot%20applications.commands&guild_id=${guildId}`,
+        `https://discord.com/oauth2/authorize?client_id=1493590565504286740&permissions=8&scope=bot%20applications.commands&guild_id=${guildId}`,
 };
 
 export { ApiError };
