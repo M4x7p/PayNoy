@@ -10,7 +10,6 @@ import { webhookRoutes } from './routes/webhook';
 import { adminRoutes } from './routes/admin';
 import { serverRoutes } from './routes/server';
 import { authRoutes } from './routes/auth';
-import { dashboardRoutes } from './routes/dashboard';
 import { startRoleAssignmentWorker } from './workers/role-assigner';
 import { startExpireOrdersCron } from './cron/expire-orders';
 import { startReconcilePaymentsCron } from './cron/reconcile-payments';
@@ -121,7 +120,6 @@ async function buildApp() {
     // ── Dashboard & Auth Routes ───────────────────────────────
 
     await app.register(authRoutes);
-    await app.register(dashboardRoutes);
 
     // ── Error Handler ─────────────────────────────────────────
 

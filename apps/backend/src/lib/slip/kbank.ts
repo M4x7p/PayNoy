@@ -47,9 +47,9 @@ async function getKBankToken(): Promise<string> {
         throw new Error(`Failed to get KBank token: ${response.status}`);
     }
 
-    const data = await response.json();
-    cachedToken = data.access_token;
-    tokenExpiry = Date.now() + (data.expires_in * 1000) - 60000; // 1 min buffer
+    const resData = await response.json() as any;
+    cachedToken = resData.access_token;
+    tokenExpiry = Date.now() + (resData.expires_in * 1000) - 60000; // 1 min buffer
     return cachedToken!;
 }
 
